@@ -18,6 +18,16 @@ export default function Validation() {
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
+  // Lock body scroll and prevent horizontal bleed when drawer is open
+  useEffect(() => {
+    if (previewOpen) {
+      document.body.classList.add('drawer-open');
+    } else {
+      document.body.classList.remove('drawer-open');
+    }
+    return () => document.body.classList.remove('drawer-open');
+  }, [previewOpen]);
+
   const isPdf = file?.type === 'application/pdf';
   const isImage = file?.type.startsWith('image/');
 
