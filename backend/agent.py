@@ -1,5 +1,6 @@
 import os
 import difflib
+import logging
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
 from langchain_core.tools import tool
@@ -11,6 +12,8 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from knowledge_graph import query_graph as kg_query_graph
 
 load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 # We use the ChatOpenAI client pointed at OpenRouter
 llm = ChatOpenAI(
@@ -66,7 +69,11 @@ def query_knowledge_graph(query: str) -> str:
     Query the Knowledge Graph to find explicitly structured relationships and business rules mapped in the contract.
     Use this to understand dependencies, exact SLAs, and connections between entities (e.g., 'VendorA', 'SLA', 'Penalties').
     """
-    return kg_query_graph(query)
+    try:
+        return kg_query_graph(query)
+    except Exception as e:
+        logger.exception("query_knowledge_graph failed for query %r: %s", query, e)
+        return "[KG_QUERY_ERROR] Knowledge graph query failed; continuing without graph context."
 
 async def validate_invoice(invoice_path: str):
     """
