@@ -1,0 +1,15 @@
+INVOICE #INV-2026-001
+Date: April 1, 2026
+Vendor: Acme Web Services
+Billed To: Global Trade LLC
+
+PAYMENT TERMS: Net 15
+
+SERVICES RENDERED:
+1. Backend Engineering: 10 hours at $150 / hr = $1500
+2. Frontend Engineering: 5 hours at $100 / hr = $500
+3. Cloud Hosting Maintenance: $500
+
+TOTAL DUE: $2500
+
+Please pay within 15 days to avoid late fees.

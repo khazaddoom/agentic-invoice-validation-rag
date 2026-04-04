@@ -1,0 +1,15 @@
+{
+    "enabled_strategies": [
+        "recursive",
+        "semantic"
+    ],
+    "chunking_parameters": {
+        "recursive": {
+            "chunk_size": 1000,
+            "chunk_overlap": 200
+        },
+        "semantic": {
+            "breakpoint_threshold_type": "percentile"
+        }
+    }
+}

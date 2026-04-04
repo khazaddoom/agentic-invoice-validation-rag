@@ -1,0 +1,18 @@
+# IDEs and Editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+
+# Random left-over files
+The
+sig_utf8.txt
+signature.txt
+
+# Do not ignore test / config files
+!test_contract.txt
+!test_invoice.txt

@@ -1,0 +1,10 @@
+MASTER SERVICE AGREEMENT
+Vendor: Acme Web Services
+Client: Global Trade LLC
+
+1. PAYMENT TERMS: All invoices must be paid strictly "Net 30". Late payments incur a 5% fee.
+2. PRICING SCHEDULE:
+   - Backend Engineering: $120 / hr
+   - Frontend Engineering: $100 / hr
+   - Cloud Hosting Maintenance: Flat fee $500 / month
+3. SLA: All support tickets must be acknowledged within 24 hours.
