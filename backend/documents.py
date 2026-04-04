@@ -4,6 +4,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
+from knowledge_graph import build_contract_graph_from_chunks
 
 CHROMA_DB_DIR = "./chroma_db"
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
@@ -58,6 +59,12 @@ def process_document(file_path: str, config: dict = None):
                 length_function=len
             )
             chunks = text_splitter.split_text(raw_text)
+            
+            # Use recursive chunks to build Knowledge Graph (only once per document)
+            try:
+                build_contract_graph_from_chunks(chunks)
+            except Exception as e:
+                print(f"Failed to build Knowledge Graph: {e}")
             
         if chunks:
             # Associate metadata with the chunks

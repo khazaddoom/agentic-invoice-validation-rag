@@ -8,6 +8,7 @@ from documents import get_vector_store, extract_text_from_pdf
 from dotenv import load_dotenv
 from mcp_adapter import get_langchain_mcp_tools
 from langchain_core.messages import HumanMessage, SystemMessage
+from knowledge_graph import query_graph as kg_query_graph
 
 load_dotenv()
 
@@ -59,6 +60,14 @@ def search_contract_clauses(query: str) -> str:
     
     return "\n\n---\n\n".join(retrieved_contexts) if retrieved_contexts else "No relevant clauses found."
 
+@tool
+def query_knowledge_graph(query: str) -> str:
+    """
+    Query the Knowledge Graph to find explicitly structured relationships and business rules mapped in the contract.
+    Use this to understand dependencies, exact SLAs, and connections between entities (e.g., 'VendorA', 'SLA', 'Penalties').
+    """
+    return kg_query_graph(query)
+
 async def validate_invoice(invoice_path: str):
     """
     Agentic workflow to validate an invoice against the knowledge base and MCP extensions.
@@ -77,15 +86,18 @@ async def validate_invoice(invoice_path: str):
     mcp_tools = await get_langchain_mcp_tools()
     
     # 3. Create tool list
-    agent_tools = [search_contract_clauses] + mcp_tools
+    agent_tools = [search_contract_clauses, query_knowledge_graph] + mcp_tools
     
     # 4. System prompt enforcing the final schema output
-    system_prompt = """You are an expert contract auditor. You must validate if the provided invoice safely adheres to contract terms and external validation rules.
-Use the `search_contract_clauses` tool to search for terms mentioned in the invoice (like vendor names, services, SLAs).
-If available, also use external validation tools like `get_external_business_rules` (if provided via MCP) to fetch any overarching system rules that might apply to this vendor or invoice.
-IMPORTANT: Do not guess. You must actually call the search tools to retrieve the contract before deciding.
+    system_prompt = """You are an expert contract auditor. You must validate if the provided invoice safely adheres to contract terms AND external validation rules.
 
-Once you have gathered enough information, you MUST output your the report strictly in Markdown format, following EXACTLY this structure:
+MANDATORY ACTION:
+You MUST call the `get_external_business_rules` tool to fetch overarching system rules that apply to this invoice.
+You MUST call the `search_contract_clauses` tool to search for specific terms mentioned in the invoice (like vendor names, services, SLAs).
+You MUST call the `query_knowledge_graph` tool to find structured relationships, rules, and connections between the invoice entities and contract.
+IMPORTANT: Do not guess. You must actually call these tools to retrieve the contract and the MCP rules before deciding.
+
+Once you have gathered enough information, you MUST output your report strictly in Markdown format, following EXACTLY this structure:
 
 ### 1. Validation Context
 [Provide a brief context of the vendor, dates, and purpose of the invoice based on your searches.]
