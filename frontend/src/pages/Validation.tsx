@@ -8,7 +8,15 @@ export default function Validation() {
   const [result, setResult] = useState<any>(null);
   const [copied, setCopied] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [drawerMounted, setDrawerMounted] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const openDrawer = () => { setDrawerMounted(true); setTimeout(() => setPreviewOpen(true), 10); };
+  const closeDrawer = () => {
+    setPreviewOpen(false);
+    // Unmount after slide-out animation completes (350ms)
+    setTimeout(() => setDrawerMounted(false), 380);
+  };
 
   // Create and revoke object URL when file changes
   useEffect(() => {
@@ -122,7 +130,7 @@ export default function Validation() {
               <button
                 id="invoice-preview-btn"
                 className="btn-secondary"
-                onClick={() => setPreviewOpen(true)}
+                onClick={openDrawer}
                 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', whiteSpace: 'nowrap' }}
               >
                 <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -151,35 +159,37 @@ export default function Validation() {
       )}
 
       {/* ── Sliding Preview Drawer ── */}
-      {previewOpen && (
-        <div
-          id="invoice-preview-overlay"
-          onClick={() => setPreviewOpen(false)}
-          style={{
-            position: 'fixed', inset: 0,
-            background: 'rgba(0,0,0,0.55)',
-            backdropFilter: 'blur(4px)',
-            zIndex: 999,
-            animation: 'fadeIn 0.2s ease',
-          }}
-        />
-      )}
-      <div
-        id="invoice-preview-drawer"
-        style={{
-          position: 'fixed',
-          top: 0, right: 0, bottom: 0,
-          width: 'min(680px, 90vw)',
-          background: '#13161f',
-          borderLeft: '1px solid rgba(255,255,255,0.08)',
-          boxShadow: '-8px 0 40px rgba(0,0,0,0.6)',
-          zIndex: 1000,
-          display: 'flex',
-          flexDirection: 'column',
-          transform: previewOpen ? 'translateX(0)' : 'translateX(110%)',
-          transition: 'transform 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
-        }}
-      >
+      {drawerMounted && (
+        <>
+          {previewOpen && (
+            <div
+              id="invoice-preview-overlay"
+              onClick={closeDrawer}
+              style={{
+                position: 'fixed', inset: 0,
+                background: 'rgba(0,0,0,0.55)',
+                backdropFilter: 'blur(4px)',
+                zIndex: 999,
+                animation: 'fadeIn 0.2s ease',
+              }}
+            />
+          )}
+          <div
+            id="invoice-preview-drawer"
+            style={{
+              position: 'fixed',
+              top: 0, right: 0, bottom: 0,
+              width: 'min(680px, 90vw)',
+              background: '#13161f',
+              borderLeft: '1px solid rgba(255,255,255,0.08)',
+              boxShadow: '-8px 0 40px rgba(0,0,0,0.6)',
+              zIndex: 1000,
+              display: 'flex',
+              flexDirection: 'column',
+              transform: previewOpen ? 'translateX(0)' : 'translateX(110%)',
+              transition: 'transform 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
+            }}
+          >
         {/* Drawer header */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -209,7 +219,7 @@ export default function Validation() {
           </div>
           <button
             id="invoice-preview-close-btn"
-            onClick={() => setPreviewOpen(false)}
+            onClick={closeDrawer}
             style={{
               background: 'rgba(255,255,255,0.06)',
               border: '1px solid rgba(255,255,255,0.1)',
@@ -258,7 +268,9 @@ export default function Validation() {
             </div>
           )}
         </div>
-      </div>
+        </div>
+        </>
+      )}
 
       {result && !result.error && (
         <div className="animate-fade-in" style={{ marginTop: '2rem' }}>
