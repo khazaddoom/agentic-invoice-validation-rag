@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -7,6 +7,37 @@ export default function Validation() {
   const [validating, setValidating] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [copied, setCopied] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [drawerMounted, setDrawerMounted] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const openDrawer = () => { setDrawerMounted(true); setTimeout(() => setPreviewOpen(true), 10); };
+  const closeDrawer = () => {
+    setPreviewOpen(false);
+    // Unmount after slide-out animation completes (350ms)
+    setTimeout(() => setDrawerMounted(false), 380);
+  };
+
+  // Create and revoke object URL when file changes
+  useEffect(() => {
+    if (!file) { setPreviewUrl(null); return; }
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  // Lock body scroll and prevent horizontal bleed when drawer is open
+  useEffect(() => {
+    if (previewOpen) {
+      document.body.classList.add('drawer-open');
+    } else {
+      document.body.classList.remove('drawer-open');
+    }
+    return () => document.body.classList.remove('drawer-open');
+  }, [previewOpen]);
+
+  const isPdf = file?.type === 'application/pdf';
+  const isImage = file?.type.startsWith('image/');
 
   const handleCopy = () => {
     if (result?.validation_report) {
@@ -93,20 +124,152 @@ export default function Validation() {
             </button>
           </div>
 
-          <button 
-            className="btn-primary" 
-            onClick={handleValidate} 
-            disabled={!file || validating}
-            style={{ width: '100%', justifyContent: 'center', minHeight: '52px' }}
+          {/* Preview + Validate row */}
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            {file && (
+              <button
+                id="invoice-preview-btn"
+                className="btn-secondary"
+                onClick={openDrawer}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', whiteSpace: 'nowrap' }}
+              >
+                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                Preview
+              </button>
+            )}
+            <button
+              id="invoice-validate-btn"
+              className="btn-primary"
+              onClick={handleValidate}
+              disabled={!file || validating}
+              style={{ flex: 1, justifyContent: 'center', minHeight: '52px' }}
+            >
+              {validating ? (
+                <>
+                  <div className="loader"></div>
+                  Agentic Analysis in Progress...
+                </>
+              ) : 'Run Agentic Validation'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Sliding Preview Drawer ── */}
+      {drawerMounted && (
+        <>
+          {previewOpen && (
+            <div
+              id="invoice-preview-overlay"
+              onClick={closeDrawer}
+              style={{
+                position: 'fixed', inset: 0,
+                background: 'rgba(0,0,0,0.55)',
+                backdropFilter: 'blur(4px)',
+                zIndex: 999,
+                animation: 'fadeIn 0.2s ease',
+              }}
+            />
+          )}
+          <div
+            id="invoice-preview-drawer"
+            style={{
+              position: 'fixed',
+              top: 0, right: 0, bottom: 0,
+              width: 'min(680px, 90vw)',
+              background: '#13161f',
+              borderLeft: '1px solid rgba(255,255,255,0.08)',
+              boxShadow: '-8px 0 40px rgba(0,0,0,0.6)',
+              zIndex: 1000,
+              display: 'flex',
+              flexDirection: 'column',
+              transform: previewOpen ? 'translateX(0)' : 'translateX(110%)',
+              transition: 'transform 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
+            }}
           >
-            {validating ? (
-              <>
-                <div className="loader"></div>
-                Agentic Analysis in Progress...
-              </>
-            ) : "Run Agentic Validation"}
+        {/* Drawer header */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '1.25rem 1.5rem',
+          borderBottom: '1px solid rgba(255,255,255,0.07)',
+          flexShrink: 0,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 8,
+              background: 'rgba(79, 70, 229, 0.2)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <svg width="18" height="18" fill="none" stroke="#6366F1" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+            </div>
+            <div>
+              <p style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--text-main)' }}>
+                {file?.name ?? 'Invoice Preview'}
+              </p>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                {file ? `${(file.size / 1024).toFixed(1)} KB` : ''}
+              </p>
+            </div>
+          </div>
+          <button
+            id="invoice-preview-close-btn"
+            onClick={closeDrawer}
+            style={{
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 8, padding: '0.4rem 0.75rem',
+              color: 'var(--text-muted)', cursor: 'pointer',
+              fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.3rem',
+              transition: 'all 0.2s',
+            }}
+          >
+            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+            Close
           </button>
         </div>
+
+        {/* Drawer body */}
+        <div style={{ flex: 1, overflow: 'hidden', position: 'relative', background: '#0d0f14' }}>
+          {previewUrl && isPdf && (
+            <iframe
+              src={previewUrl}
+              title="Invoice PDF Preview"
+              style={{ width: '100%', height: '100%', border: 'none' }}
+            />
+          )}
+          {previewUrl && isImage && (
+            <div style={{
+              width: '100%', height: '100%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: '1.5rem', overflow: 'auto',
+            }}>
+              <img
+                src={previewUrl}
+                alt="Invoice preview"
+                style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: 8, objectFit: 'contain' }}
+              />
+            </div>
+          )}
+          {!previewUrl && (
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              height: '100%', color: 'var(--text-muted)',
+            }}>
+              No preview available
+            </div>
+          )}
+        </div>
+        </div>
+        </>
       )}
 
       {result && !result.error && (

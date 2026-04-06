@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+python-multipart
+pydantic
+langchain-openai
+langchain-core
+langgraph
+python-dotenv
+pdfplumber
+langchain-text-splitters
+langchain-experimental
+langchain-community
+sentence-transformers
+chromadb
+mcp
+networkx
